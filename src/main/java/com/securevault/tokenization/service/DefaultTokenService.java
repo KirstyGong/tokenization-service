@@ -3,6 +3,7 @@ package com.securevault.tokenization.service;
 import java.util.List;
 
 import com.securevault.tokenization.dto.EncryptedData;
+import com.securevault.tokenization.exception.TokenNotFoundException;
 import com.securevault.tokenization.factory.TokenRecordFactory;
 import com.securevault.tokenization.model.TokenRecord;
 import com.securevault.tokenization.repository.TokenRepository;
@@ -34,6 +35,20 @@ public class DefaultTokenService implements TokenService {
         return values.stream()
                 .map(this::tokenizeValue)
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> detokenize(List<String> tokens) {
+        return tokens.stream()
+                .map(this::detokenizeValue)
+                .toList();
+    }
+
+    private String detokenizeValue(String token) {
+        TokenRecord record = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new TokenNotFoundException(token));
+        return encryptionService.decrypt(record.getEncryptedValue(), record.getKeyVersion());
     }
 
     private String tokenizeValue(String value) {

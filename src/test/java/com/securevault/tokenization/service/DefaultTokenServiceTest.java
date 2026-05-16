@@ -3,6 +3,7 @@ package com.securevault.tokenization.service;
 import static com.securevault.tokenization.testdata.PrimitiveDataProvider.getRandomInteger;
 import static com.securevault.tokenization.testdata.PrimitiveDataProvider.getRandomString;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.securevault.tokenization.dto.EncryptedData;
+import com.securevault.tokenization.exception.TokenNotFoundException;
 import com.securevault.tokenization.factory.TokenRecordFactory;
 import com.securevault.tokenization.model.TokenRecord;
 import com.securevault.tokenization.repository.TokenRepository;
@@ -190,6 +192,65 @@ class DefaultTokenServiceTest {
             @Test
             void shouldReturnTokensInOrder() {
                 assertThat(result).containsExactly(token, otherToken);
+            }
+        }
+    }
+
+    @Nested
+    class Detokenize {
+
+        @Nested
+        class WhenTokenExists {
+
+            private List<String> result;
+
+            @BeforeEach
+            void setUp() {
+                when(tokenRepository.findByToken(token)).thenReturn(Optional.of(existingRecord));
+                when(existingRecord.getEncryptedValue()).thenReturn(cipherText);
+                when(existingRecord.getKeyVersion()).thenReturn(keyVersion);
+                when(encryptionService.decrypt(cipherText, keyVersion)).thenReturn(value);
+
+                result = tokenService.detokenize(List.of(token));
+            }
+
+            @Test
+            void shouldLookUpToken() {
+                verify(tokenRepository).findByToken(token);
+            }
+
+            @Test
+            void shouldDecryptValue() {
+                verify(encryptionService).decrypt(cipherText, keyVersion);
+            }
+
+            @Test
+            void shouldReturnDecryptedValue() {
+                assertThat(result).containsExactly(value);
+            }
+        }
+
+        @Nested
+        class WhenTokenDoesNotExist {
+
+            @BeforeEach
+            void setUp() {
+                when(tokenRepository.findByToken(token)).thenReturn(Optional.empty());
+            }
+
+            @Test
+            void shouldThrowTokenNotFoundException() {
+                assertThatThrownBy(() -> tokenService.detokenize(List.of(token)))
+                        .isInstanceOf(TokenNotFoundException.class);
+            }
+        }
+
+        @Nested
+        class WhenInputIsEmpty {
+
+            @Test
+            void shouldReturnEmptyList() {
+                assertThat(tokenService.detokenize(List.of())).isEmpty();
             }
         }
     }
