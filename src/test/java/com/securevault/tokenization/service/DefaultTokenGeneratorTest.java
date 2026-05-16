@@ -2,6 +2,8 @@ package com.securevault.tokenization.service;
 
 import java.util.UUID;
 
+import com.securevault.tokenization.utils.DefaultTokenGenerator;
+import com.securevault.tokenization.utils.UuidProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;

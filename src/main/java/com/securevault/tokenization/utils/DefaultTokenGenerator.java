@@ -1,4 +1,4 @@
-package com.securevault.tokenization.service;
+package com.securevault.tokenization.utils;
 
 import org.springframework.stereotype.Component;
 
