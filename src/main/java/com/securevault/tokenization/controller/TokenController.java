@@ -22,7 +22,7 @@ public class TokenController {
 
     @PostMapping("/tokenize")
     public ResponseEntity<TokenizeResponse> tokenize(@Valid @RequestBody TokenizeRequest request) {
-        List<String> tokens = tokenService.tokenize(request.values());
+        List<String> tokens = tokenService.tokenize(request.getValues());
         return ResponseEntity.ok(new TokenizeResponse(tokens));
     }
 }

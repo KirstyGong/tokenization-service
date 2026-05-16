@@ -51,7 +51,7 @@ class TokenControllerTest {
 
         @BeforeEach
         void setUp() {
-            when(tokenizeRequest.values()).thenReturn(List.of(value, otherValue));
+            when(tokenizeRequest.getValues()).thenReturn(List.of(value, otherValue));
             when(tokenService.tokenize(List.of(value, otherValue)))
                     .thenReturn(List.of(token, otherToken));
 
