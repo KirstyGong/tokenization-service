@@ -1,6 +1,5 @@
 tokenization:
   encryption:
     active-key-version: 1
-    salt: "a1b2c3d4e5f60718"
     keys:
-      1: "t0k3niz4ti0n-s3cur3-k3y"
+      1: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"

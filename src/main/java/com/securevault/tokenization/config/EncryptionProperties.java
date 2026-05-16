@@ -13,5 +13,4 @@ public class EncryptionProperties {
 
     private int activeKeyVersion;
     private Map<Integer, String> keys;
-    private String salt;
 }

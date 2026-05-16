@@ -25,4 +25,10 @@ public class PrimitiveDataProvider {
         RANDOM.nextBytes(bytes);
         return HexFormat.of().formatHex(bytes);
     }
+
+    public static String getRandomHexKey() {
+        byte[] bytes = new byte[32];
+        RANDOM.nextBytes(bytes);
+        return HexFormat.of().formatHex(bytes);
+    }
 }
