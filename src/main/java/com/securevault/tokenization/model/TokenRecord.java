@@ -11,10 +11,8 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
-@Setter
 @Entity
 @Table(name = "token_records")
 public class TokenRecord {
@@ -31,6 +29,15 @@ public class TokenRecord {
 
     @Column(nullable = false)
     private int keyVersion;
+
+    protected TokenRecord() {
+    }
+
+    public TokenRecord(String token, String encryptedValue, int keyVersion) {
+        this.token = token;
+        this.encryptedValue = encryptedValue;
+        this.keyVersion = keyVersion;
+    }
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
