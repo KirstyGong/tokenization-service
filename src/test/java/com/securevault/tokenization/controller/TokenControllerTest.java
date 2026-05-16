@@ -7,9 +7,12 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import com.securevault.tokenization.dto.DetokenizeRequest;
+import com.securevault.tokenization.dto.DetokenizeResponse;
 import com.securevault.tokenization.dto.TokenizeRequest;
 import com.securevault.tokenization.dto.TokenizeResponse;
 import com.securevault.tokenization.service.TokenService;
+import org.junit.jupiter.api.Assertions;
 import org.springframework.http.ResponseEntity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -26,6 +29,9 @@ class TokenControllerTest {
 
     @Mock
     private TokenizeRequest tokenizeRequest;
+
+    @Mock
+    private DetokenizeRequest detokenizeRequest;
 
     private TokenController tokenController;
 
@@ -74,4 +80,34 @@ class TokenControllerTest {
         }
     }
 
+    @Nested
+    class Detokenize {
+
+        private ResponseEntity<DetokenizeResponse> result;
+
+        @BeforeEach
+        void setUp() {
+            when(detokenizeRequest.getTokens()).thenReturn(List.of(token, otherToken));
+            when(tokenService.detokenize(List.of(token, otherToken)))
+                    .thenReturn(List.of(value, otherValue));
+
+            result = tokenController.detokenize(detokenizeRequest);
+        }
+
+        @Test
+        void shouldCallTokenServiceWithTokens() {
+            verify(tokenService).detokenize(List.of(token, otherToken));
+        }
+
+        @Test
+        void shouldReturnOkStatus() {
+            assertThat(result.getStatusCode().value()).isEqualTo(200);
+        }
+
+        @Test
+        void shouldReturnValuesInResponse() {
+            Assertions.assertNotNull(result.getBody());
+            assertThat(result.getBody().values()).containsExactly(value, otherValue);
+        }
+    }
 }
