@@ -47,7 +47,7 @@ public class DefaultTokenService implements TokenService {
 
     private String detokenizeValue(String token) {
         TokenRecord record = tokenRepository.findByToken(token)
-                .orElseThrow(() -> new TokenNotFoundException(token));
+                .orElseThrow(() -> new TokenNotFoundException("Tokens can not be detokenized"));
         return encryptionService.decrypt(record.getEncryptedValue(), record.getKeyVersion());
     }
 

@@ -140,4 +140,3 @@ utils/
 
 - **Deterministic encryption**: Same plaintext + same key = same ciphertext. This enables idempotent tokenization via database lookup on `(encrypted_value, key_version)` without storing a separate hash.
 - **Key versioning**: Encryption keys are versioned, supporting future key rotation. Each token record stores which key version was used.
-- **Factory pattern**: `TokenRecordFactory` and `EncryptorFactory` improve testability by making object creation mockable.
