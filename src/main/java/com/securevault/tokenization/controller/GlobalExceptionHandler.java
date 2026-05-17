@@ -3,6 +3,7 @@ package com.securevault.tokenization.controller;
 import com.securevault.tokenization.dto.ErrorResponse;
 import com.securevault.tokenization.exception.EncryptionException;
 import com.securevault.tokenization.exception.TokenNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -17,6 +18,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(TokenNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleTokenNotFoundException(TokenNotFoundException ex) {
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(ex.getMessage()));
     }
 }
