@@ -7,7 +7,7 @@ A Spring Boot service that replaces sensitive data with non-reversible tokens, s
 - Java 17, Spring Boot 3.4.5
 - AES-256-GCM deterministic encryption (same input always produces the same ciphertext)
 - H2 in-memory database with Flyway migrations
-- Spring Data JPA, Jakarta Bean Validation
+- Spring Data JPA
 - OpenAPI / Swagger UI
 
 ## Getting Started
@@ -67,22 +67,6 @@ Response `200 OK`:
     "values": ["sensitive-data-1", "sensitive-data-2"]
 }
 ```
-
-### Error Responses
-
-| Status | Condition                    |
-|--------|------------------------------|
-| 400    | Values/tokens empty or null  |
-| 404    | Token not found              |
-| 500    | Encryption failure           |
-
-## Other Endpoints
-
-| URL                                      | Description         |
-|------------------------------------------|---------------------|
-| http://localhost:3000/swagger-ui.html     | Swagger UI          |
-| http://localhost:3000/v3/api-docs         | OpenAPI spec (JSON) |
-| http://localhost:3000/h2-console          | H2 database console |
 
 ### H2 Console Connection
 
