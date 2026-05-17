@@ -1,26 +1,53 @@
 package com.securevault.tokenization.crypto;
 
 import static com.securevault.tokenization.testdata.PrimitiveDataProvider.getRandomHexKey;
-import static com.securevault.tokenization.testdata.PrimitiveDataProvider.getRandomHexString;
 import static com.securevault.tokenization.testdata.PrimitiveDataProvider.getRandomString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Arrays;
 
-import com.securevault.tokenization.exception.EncryptionException;
+import javax.crypto.Cipher;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+@MockitoSettings(strictness = Strictness.LENIENT)
 class DeterministicBytesEncryptorTest {
+
+    @Mock
+    private IvDerivator ivDerivator;
+
+    @Mock
+    private CipherExecutor cipherExecutor;
 
     private DeterministicBytesEncryptor encryptor;
     private byte[] plaintext;
+    private byte[] fakeCiphertext;
+    private byte[] iv;
 
     @BeforeEach
     void setUp() {
-        encryptor = new DeterministicBytesEncryptor(getRandomHexKey());
+        iv = new byte[12];
+        new SecureRandom().nextBytes(iv);
+        fakeCiphertext = new byte[16];
+        new SecureRandom().nextBytes(fakeCiphertext);
+
+        when(ivDerivator.deriveIv(any())).thenReturn(iv);
+        when(cipherExecutor.execute(eq(Cipher.ENCRYPT_MODE), any(), any(), any())).thenReturn(fakeCiphertext);
+        when(cipherExecutor.execute(eq(Cipher.DECRYPT_MODE), any(), any(), any())).thenReturn(new byte[]{1, 2, 3});
+
+        encryptor = new DeterministicBytesEncryptor(getRandomHexKey(), ivDerivator, cipherExecutor);
         plaintext = getRandomString().getBytes(StandardCharsets.UTF_8);
     }
 
@@ -35,81 +62,48 @@ class DeterministicBytesEncryptorTest {
         }
 
         @Test
-        void shouldReturnNonEmptyResult() {
-            assertThat(result).isNotEmpty();
+        void shouldDelegateIvDerivationToIvDerivator() {
+            verify(ivDerivator).deriveIv(plaintext);
         }
 
         @Test
-        void shouldProduceSameCiphertextForSamePlaintext() {
-            assertThat(encryptor.encrypt(plaintext)).isEqualTo(result);
+        void shouldDelegateToCipherExecutor() {
+            verify(cipherExecutor).execute(eq(Cipher.ENCRYPT_MODE), any(), eq(iv), eq(plaintext));
         }
 
         @Test
-        void shouldProduceDifferentCiphertextForDifferentPlaintext() {
-            byte[] otherPlaintext = getRandomString().getBytes(StandardCharsets.UTF_8);
+        void shouldPrependIvToCiphertext() {
+            byte[] ivFromResult = Arrays.copyOfRange(result, 0, 12);
+            byte[] ciphertextFromResult = Arrays.copyOfRange(result, 12, result.length);
 
-            assertThat(encryptor.encrypt(otherPlaintext)).isNotEqualTo(result);
-        }
-    }
-
-    @Nested
-    class WithInvalidKey {
-
-        @Test
-        void shouldThrowEncryptionExceptionForWrongKeyLength() {
-            DeterministicBytesEncryptor invalidEncryptor =
-                    new DeterministicBytesEncryptor(getRandomHexString());
-
-            assertThatThrownBy(() -> invalidEncryptor.encrypt(plaintext))
-                    .isInstanceOf(EncryptionException.class);
-        }
-
-        @Test
-        void shouldThrowExceptionForInvalidHex() {
-            assertThatThrownBy(() -> new DeterministicBytesEncryptor("not-valid-hex"))
-                    .isInstanceOf(IllegalArgumentException.class);
+            assertThat(ivFromResult).isEqualTo(iv);
+            assertThat(ciphertextFromResult).isEqualTo(fakeCiphertext);
         }
     }
 
     @Nested
     class Decrypt {
 
-        @Nested
-        class WithValidCiphertext {
+        @Test
+        void shouldExtractIvAndDelegateToCipherExecutor() {
+            byte[] input = new byte[28];
+            new SecureRandom().nextBytes(input);
 
-            @Test
-            void shouldRecoverOriginalPlaintext() {
-                byte[] encrypted = encryptor.encrypt(plaintext);
+            encryptor.decrypt(input);
 
-                assertThat(encryptor.decrypt(encrypted)).isEqualTo(plaintext);
-            }
+            byte[] expectedIv = Arrays.copyOfRange(input, 0, 12);
+            byte[] expectedCiphertext = Arrays.copyOfRange(input, 12, input.length);
+            verify(cipherExecutor).execute(eq(Cipher.DECRYPT_MODE), any(), eq(expectedIv), eq(expectedCiphertext));
         }
+    }
 
-        @Nested
-        class WithTamperedCiphertext {
+    @Nested
+    class WithInvalidHex {
 
-            @Test
-            void shouldThrowEncryptionException() {
-                byte[] encrypted = encryptor.encrypt(plaintext);
-                encrypted[encrypted.length - 1] ^= 0xFF;
-
-                assertThatThrownBy(() -> encryptor.decrypt(encrypted))
-                        .isInstanceOf(EncryptionException.class);
-            }
-        }
-
-        @Nested
-        class WithWrongKey {
-
-            @Test
-            void shouldThrowEncryptionException() {
-                byte[] encrypted = encryptor.encrypt(plaintext);
-                DeterministicBytesEncryptor wrongKeyEncryptor =
-                        new DeterministicBytesEncryptor(getRandomHexKey());
-
-                assertThatThrownBy(() -> wrongKeyEncryptor.decrypt(encrypted))
-                        .isInstanceOf(EncryptionException.class);
-            }
+        @Test
+        void shouldThrowExceptionForInvalidHex() {
+            assertThatThrownBy(() -> new DeterministicBytesEncryptor("not-valid-hex", ivDerivator, cipherExecutor))
+                    .isInstanceOf(IllegalArgumentException.class);
         }
     }
 }

@@ -3,6 +3,8 @@ package com.securevault.tokenization.service;
 import java.util.Map;
 
 import com.securevault.tokenization.config.EncryptionProperties;
+import com.securevault.tokenization.crypto.CipherExecutor;
+import com.securevault.tokenization.crypto.IvDerivator;
 import com.securevault.tokenization.exception.EncryptionException;
 import com.securevault.tokenization.factory.DefaultEncryptorFactory;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +27,12 @@ class DefaultEncryptorFactoryTest {
     @Mock
     private EncryptionProperties encryptionProperties;
 
+    @Mock
+    private IvDerivator ivDerivator;
+
+    @Mock
+    private CipherExecutor cipherExecutor;
+
     private DefaultEncryptorFactory factory;
     private int keyVersion;
 
@@ -35,7 +43,7 @@ class DefaultEncryptorFactoryTest {
         when(encryptionProperties.getKeys()).thenReturn(
                 Map.of(keyVersion, getRandomHexKey()));
 
-        factory = new DefaultEncryptorFactory(encryptionProperties);
+        factory = new DefaultEncryptorFactory(encryptionProperties, ivDerivator, cipherExecutor);
     }
 
     @Nested
